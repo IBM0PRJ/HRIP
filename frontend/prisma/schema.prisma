@@ -1,0 +1,143 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model AccessRequest {
+  id            String   @id @default(cuid())
+  employeeName  String
+  employeeEmail String
+  department    String
+  photoUrl      String   
+  lat           Float
+  lng           Float
+  locationName  String
+  deviceType    String
+  status        String   // "pending" | "approved" | "denied"
+  createdAt     DateTime @default(now())
+}
+
+model Session {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  email          String   @unique
+  state          String   // "active" | "isolated" | "reauth_required"
+  
+  // Real active integrations
+  intEmail       Boolean  @default(false)
+  intSms         Boolean  @default(false)
+  intVoice       Boolean  @default(false)
+  intProcess     Boolean  @default(false)
+  intUsb         Boolean  @default(false)
+  intNetwork     Boolean  @default(false)
+  intFiles       Boolean  @default(false)
+  intClipboard   Boolean  @default(false)
+
+  telemetryLogs  TelemetryLog[]
+  createdAt      DateTime @default(now())
+}
+
+model TelemetryLog {
+  id        String   @id @default(cuid())
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id])
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model LogRequest {
+  id        String   @id @default(cuid())
+  email     String
+  startTime DateTime
+  endTime   DateTime
+  status    String   @default("PENDING") // PENDING, APPROVED, REJECTED, COMPLETED
+  createdAt DateTime @default(now())
+}
+
+model Employee {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  passwordHash  String
+  department    String
+  isVerified    Boolean   @default(false)
+  riskScore     Float     @default(0)
+  createdAt     DateTime  @default(now())
+  
+  alerts           EmployeeAlert[]
+  trainingProgress TrainingProgress[]
+  incidentReports  IncidentReport[]
+}
+
+model Analyst {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  passwordHash  String
+  isApproved    Boolean   @default(false)
+  approvedBy    String?   // email of approving analyst
+  createdAt     DateTime  @default(now())
+}
+
+model OTPCode {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  purpose   String   // "employee_signup" | "analyst_signup" | "login"
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model EmployeeAlert {
+  id          String   @id @default(cuid())
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  type        String   // "phishing_detected" | "suspicious_login" | "usb_alert" | "data_exfil"
+  severity    String   // "critical" | "high" | "medium" | "low"
+  title       String
+  description String
+  isRead      Boolean  @default(false)
+  resolvedAt  DateTime?
+  createdAt   DateTime @default(now())
+}
+
+model TrainingModule {
+  id          String   @id @default(cuid())
+  title       String
+  topic       String   // "phishing" | "passwords" | "social_engineering" | "usb_security"
+  difficulty  String   // "beginner" | "intermediate" | "advanced"
+  questions   String   // JSON string of questions array
+  passMark    Int      @default(2) // out of 3
+  
+  progress    TrainingProgress[]
+}
+
+model TrainingProgress {
+  id         String   @id @default(cuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  moduleId   String
+  module     TrainingModule @relation(fields: [moduleId], references: [id])
+  score      Int
+  completedAt DateTime @default(now())
+  
+  @@unique([employeeId, moduleId])
+}
+
+model IncidentReport {
+  id          String   @id @default(cuid())
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  senderEmail String
+  subject     String
+  description String
+  status      String   @default("pending_review") // "pending_review" | "investigating" | "resolved" | "false_positive"
+  analystNote String?
+  createdAt   DateTime @default(now())
+}

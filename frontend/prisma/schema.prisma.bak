@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model AccessRequest {
+  id            String   @id @default(cuid())
+  employeeName  String
+  employeeEmail String
+  department    String
+  photoUrl      String   // Using String for SQLite (could be TEXT in postgres)
+  lat           Float
+  lng           Float
+  locationName  String
+  deviceType    String
+  status        String   // "pending" | "approved" | "denied"
+  createdAt     DateTime @default(now())
+}
+
+model Session {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  email          String   @unique
+  state          String   // "active" | "isolated" | "reauth_required"
+  
+  // Real active integrations
+  intEmail       Boolean  @default(false)
+  intSms         Boolean  @default(false)
+  intVoice       Boolean  @default(false)
+  intProcess     Boolean  @default(false)
+  intUsb         Boolean  @default(false)
+  intNetwork     Boolean  @default(false)
+  intFiles       Boolean  @default(false)
+  intClipboard   Boolean  @default(false)
+
+  telemetryLogs  TelemetryLog[]
+  createdAt      DateTime @default(now())
+}
+
+model TelemetryLog {
+  id        String   @id @default(cuid())
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id])
+  message   String
+  createdAt DateTime @default(now())
+}
+

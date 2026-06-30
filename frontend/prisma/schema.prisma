@@ -141,3 +141,34 @@ model IncidentReport {
   analystNote String?
   createdAt   DateTime @default(now())
 }
+
+// ── Native Agent Architecture Models ──
+
+model AgentToken {
+  id            String   @id @default(cuid())
+  token         String   @unique
+  employeeEmail String   @unique
+  lastSeenAt    DateTime @default(now())
+  createdAt     DateTime @default(now())
+}
+
+model TelemetryEvent {
+  id            String   @id @default(cuid())
+  employeeEmail String
+  category      String   // "process" | "usb" | "network" | "files" | "clipboard"
+  data          String   // JSON string of the raw OS data
+  flagged       Boolean  @default(false)
+  riskLevel     String?
+  alertCreated  Boolean  @default(false)
+  createdAt     DateTime @default(now())
+}
+
+model PermissionRequest {
+  id            String   @id @default(cuid())
+  employeeEmail String
+  permissionKey String   // e.g. "intUsb", "intProcess"
+  reason        String
+  status        String   @default("PENDING") // PENDING, APPROVED, DENIED
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

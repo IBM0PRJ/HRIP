@@ -39,7 +39,6 @@ export default function LoginPage() {
         return;
       }
 
-      // Analyst: switch to OTP step
       if (data.step === "otp") {
         setAnalystEmail(data.email);
         setAnalystStep("otp");
@@ -74,7 +73,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.push(data.redirectTo || "/");
+      router.push(data.redirectTo || "/analyst");
     } catch {
       setError("An error occurred. Please try again.");
       setIsLoading(false);
@@ -82,184 +81,188 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="loginContainer">
-      <div className="loginCard">
-        <div className="loginHeader">
-          <div className="brandMark" style={{ margin: "0 auto 16px" }}>
-            <span>HRIP</span>
-          </div>
-          <h2>Human Risk Intelligence</h2>
-          <p className="muted" style={{ marginTop: 8 }}>
-            {!role ? "Please select your role to continue" : 
-             role === "analyst" && analystStep === "otp" ? "Two-Factor Authentication" :
-             "Secure sign in"}
+    <div className="glassLoginContainer">
+      {/* Ambient Orbs */}
+      <div className="glassOrb glassOrb--tl" />
+      <div className="glassOrb glassOrb--br" />
+
+      {/* Main Glass Card */}
+      <div className="glassLoginCard">
+
+        {/* Logo Badge */}
+        <div className="glassLogoBadge">
+          <span>HRIP</span>
+        </div>
+
+        {/* Header */}
+        <div className="glassLoginHeader">
+          <h2 className="glassLoginTitle">Human Risk Intelligence</h2>
+          <p className="glassLoginSubtitle">
+            {!role
+              ? "Please select your role to continue"
+              : role === "analyst" && analystStep === "otp"
+              ? "Two-Factor Authentication"
+              : role === "analyst"
+              ? "Security Operations Sign In"
+              : "Employee Sign In"}
           </p>
         </div>
 
-        {/* ── Role Selection ── */}
+        {/* Role Selection */}
         {!role ? (
-          <div className="roleSelection">
-            <button className="roleCard" onClick={() => { setRole("employee"); setError(null); }}>
-              <div className="roleIcon">👤</div>
-              <h3>Employee Portal</h3>
-              <p className="muted">Device integration and training</p>
+          <div className="glassRoleList">
+            <button
+              className="glassRoleCard"
+              onClick={() => { setRole("employee"); setError(null); }}
+            >
+              <div className="glassRoleIconWrap glassRoleIconWrap--purple">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+              </div>
+              <div className="glassRoleText">
+                <span className="glassRoleLabel">Employee Portal</span>
+                <span className="glassRoleDesc">Device integration and training</span>
+              </div>
+              <span className="glassRoleChevron">&#8250;</span>
             </button>
 
-            <button className="roleCard accent" onClick={() => { setRole("analyst"); setError(null); }}>
-              <div className="roleIcon">🛡️</div>
-              <h3>Security Operations</h3>
-              <p className="muted">Analyst dashboard and triage</p>
+            <button
+              className="glassRoleCard"
+              onClick={() => { setRole("analyst"); setError(null); }}
+            >
+              <div className="glassRoleIconWrap glassRoleIconWrap--blue">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  <polyline points="9 12 11 14 15 10"/>
+                </svg>
+              </div>
+              <div className="glassRoleText">
+                <span className="glassRoleLabel">Security Operations</span>
+                <span className="glassRoleDesc">Analyst dashboard and triage</span>
+              </div>
+              <span className="glassRoleChevron">&#8250;</span>
             </button>
           </div>
 
-        /* ── Analyst: OTP Step ── */
         ) : role === "analyst" && analystStep === "otp" ? (
-          <form className="loginForm fadeIn delay0" onSubmit={handleAnalystOtp}>
-            <div style={{
-              background: "rgba(141,208,194,0.08)",
-              border: "1px solid rgba(141,208,194,0.2)",
-              borderRadius: 14, padding: "16px 20px",
-              marginBottom: 24, display: "flex", alignItems: "flex-start", gap: 12
-            }}>
-              <span style={{ fontSize: "1.3rem" }}>✉️</span>
+          /* Analyst OTP Step */
+          <form className="glassForm fadeIn delay0" onSubmit={handleAnalystOtp}>
+            <div className="glassOtpBanner">
+              <span className="glassOtpBannerIcon">&#9993;</span>
               <div>
-                <div style={{ fontWeight: 600, fontSize: "0.9rem", marginBottom: 4 }}>
-                  Verification code sent
-                </div>
-                <p className="muted" style={{ fontSize: "0.82rem" }}>
-                  A 6-digit code was sent to <strong style={{ color: "var(--accent)" }}>{analystEmail}</strong>.
-                  Check your inbox and enter it below.
+                <div className="glassOtpBannerTitle">Verification code sent</div>
+                <p className="glassOtpBannerText">
+                  A 6-digit code was sent to{" "}
+                  <strong style={{ color: "var(--accent-2)" }}>{analystEmail}</strong>.
+                  Check your inbox.
                 </p>
               </div>
             </div>
 
-            {error && <div className="errorText" style={{ marginBottom: 16 }}>{error}</div>}
+            {error && <div className="glassErrorText">{error}</div>}
 
-            <div className="inputGroup">
-              <label>6-Digit Security Code</label>
+            <div className="glassInputGroup">
+              <label className="glassLabel">6-Digit Security Code</label>
               <input
+                className="glassInput glassInput--analyst"
                 type="text"
                 inputMode="numeric"
                 maxLength={6}
-                placeholder="• • • • • •"
+                placeholder="&bull; &bull; &bull; &bull; &bull; &bull;"
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
                 required
-                style={{ letterSpacing: "0.3em", fontSize: "1.3rem", textAlign: "center" }}
+                style={{ letterSpacing: "0.35em", fontSize: "1.4rem", textAlign: "center" }}
                 autoFocus
               />
             </div>
 
-            <button
-              type="submit"
-              className="buttonPrimary"
-              style={{ width: "100%", justifyContent: "center" }}
-              disabled={isLoading || otpCode.length !== 6}
-            >
-              {isLoading ? "Verifying..." : "Verify & Access Console →"}
+            <button type="submit" className="glassSubmitBtn glassSubmitBtn--analyst"
+              disabled={isLoading || otpCode.length !== 6}>
+              {isLoading ? "Verifying…" : "Verify & Access Console →"}
             </button>
 
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
-              <button
-                type="button"
-                className="textButton"
-                onClick={() => { setAnalystStep("credentials"); setOtpCode(""); setError(null); }}
-              >
-                ← Back to credentials
+            <div className="glassFormFooter">
+              <button type="button" className="glassTextBtn"
+                onClick={() => { setAnalystStep("credentials"); setOtpCode(""); setError(null); }}>
+                ← Back
               </button>
-              <button
-                type="button"
-                className="textButton"
-                onClick={() => handleLogin({ preventDefault: () => {} } as any)}
-                style={{ color: "var(--accent)" }}
-              >
+              <button type="button" className="glassTextBtn glassTextBtn--accent"
+                onClick={() => handleLogin({ preventDefault: () => {} } as React.FormEvent)}>
                 Resend code
               </button>
             </div>
           </form>
 
-        /* ── Analyst: Credentials Step ── */
         ) : role === "analyst" ? (
-          <form className="loginForm fadeIn delay0" onSubmit={handleLogin}>
-            <h3>Analyst Sign In</h3>
-            <p className="muted" style={{ fontSize: "0.85rem", marginBottom: 20 }}>
+          /* Analyst Credentials Step */
+          <form className="glassForm fadeIn delay0" onSubmit={handleLogin}>
+            <p className="glassFormNote">
               A verification code will be sent to your email after credentials are confirmed.
             </p>
-            {error && <div className="errorText" style={{ marginBottom: 16 }}>{error}</div>}
-            <div className="inputGroup">
-              <label>Email Address</label>
-              <input type="email" placeholder="analyst@company.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            {error && <div className="glassErrorText">{error}</div>}
+            <div className="glassInputGroup">
+              <label className="glassLabel">Email Address</label>
+              <input className="glassInput glassInput--analyst" type="email"
+                placeholder="analyst@company.com" value={email}
+                onChange={(e) => setEmail(e.target.value)} required />
             </div>
-            <div className="inputGroup">
-              <label>Password</label>
-              <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <div className="glassInputGroup">
+              <label className="glassLabel">Password</label>
+              <input className="glassInput glassInput--analyst" type="password"
+                placeholder="••••••••" value={password}
+                onChange={(e) => setPassword(e.target.value)} required />
             </div>
-            <button
-              type="submit"
-              className="buttonPrimary"
-              style={{ width: "100%", justifyContent: "center" }}
-              disabled={isLoading}
-            >
-              {isLoading ? "Verifying..." : "Continue →"}
+            <button type="submit" className="glassSubmitBtn glassSubmitBtn--analyst"
+              disabled={isLoading}>
+              {isLoading ? "Verifying…" : "Continue →"}
             </button>
-
-            <div style={{ display: "flex", justifyContent: "flex-start", marginTop: 16 }}>
-              <button type="button" className="textButton" onClick={() => setRole(null)}>
+            <div className="glassFormFooter">
+              <button type="button" className="glassTextBtn" onClick={() => setRole(null)}>
                 ← Back
               </button>
             </div>
-
-            <div style={{
-              marginTop: 20, padding: "12px 16px",
-              background: "rgba(255,255,255,0.02)", borderRadius: 10,
-              border: "1px solid rgba(255,255,255,0.06)"
-            }}>
-              <p className="muted" style={{ fontSize: "0.78rem", textAlign: "center" }}>
-                🔒 Analyst accounts are provisioned by administrators only.
-              </p>
+            <div className="glassAdminNote">
+              &#128274; Analyst accounts are provisioned by administrators only.
             </div>
           </form>
 
-        /* ── Employee: Credentials Step ── */
         ) : (
-          <form className="loginForm fadeIn delay0" onSubmit={handleLogin}>
-            <h3>Employee Sign In</h3>
-            <p className="muted" style={{ fontSize: "0.85rem", marginBottom: 20 }}>
+          /* Employee Credentials Step */
+          <form className="glassForm fadeIn delay0" onSubmit={handleLogin}>
+            <p className="glassFormNote">
               Zero-Trust onboarding requires live device verification.
             </p>
-            {error && <div className="errorText" style={{ marginBottom: 16 }}>{error}</div>}
-            <div className="inputGroup">
-              <label>Work Email</label>
-              <input type="email" placeholder="sarah.j@company.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            {error && <div className="glassErrorText">{error}</div>}
+            <div className="glassInputGroup">
+              <label className="glassLabel">Work Email</label>
+              <input className="glassInput glassInput--employee" type="email"
+                placeholder="sarah.j@company.com" value={email}
+                onChange={(e) => setEmail(e.target.value)} required />
             </div>
-            <div className="inputGroup">
-              <label>Password</label>
-              <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <div className="glassInputGroup">
+              <label className="glassLabel">Password</label>
+              <input className="glassInput glassInput--employee" type="password"
+                placeholder="••••••••" value={password}
+                onChange={(e) => setPassword(e.target.value)} required />
             </div>
-            <button
-              type="submit"
-              className="buttonPrimary"
-              style={{ width: "100%", justifyContent: "center" }}
-              disabled={isLoading}
-            >
-              {isLoading ? "Signing In..." : "Continue to Verification →"}
+            <button type="submit" className="glassSubmitBtn glassSubmitBtn--employee"
+              disabled={isLoading}>
+              {isLoading ? "Signing In…" : "Continue to Verification →"}
             </button>
-
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
-              <button type="button" className="textButton" onClick={() => setRole(null)}>
+            <div className="glassFormFooter">
+              <button type="button" className="glassTextBtn" onClick={() => setRole(null)}>
                 ← Back
               </button>
-              <Link href="/signup/employee" className="textLink" style={{ fontSize: "0.9rem" }}>
+              <Link href="/signup/employee" className="glassTextBtn glassTextBtn--accent">
                 Create Account →
               </Link>
             </div>
           </form>
         )}
       </div>
-
-      {/* Decorative blobs */}
-      <div className="glowBlob" style={{ top: "-20%", left: "-10%", background: "var(--accent)", opacity: 0.15 }} />
-      <div className="glowBlob" style={{ bottom: "-20%", right: "-10%", background: "var(--danger)", opacity: 0.1 }} />
     </div>
   );
 }

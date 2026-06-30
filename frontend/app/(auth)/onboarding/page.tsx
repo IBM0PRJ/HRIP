@@ -247,7 +247,18 @@ function OnboardingContent() {
   }, [step]);
 
   return (
-    <div className="loginContainer" style={{ padding: 40, alignItems: "flex-start", overflowY: "auto" }}>
+    <div style={{
+      minHeight: "100vh",
+      display: "flex",
+      alignItems: "flex-start",
+      justifyContent: "center",
+      padding: "40px 20px",
+      overflowY: "auto",
+      overflowX: "hidden",
+      background: "var(--bg, #081019)",
+      position: "relative",
+      boxSizing: "border-box"
+    }}>
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes scan {
           0% { top: 10%; }

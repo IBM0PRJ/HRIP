@@ -9,8 +9,27 @@ export default function EmployeeDashboardPage() {
   const [training, setTraining] = useState<any>(null);
   const [incidents, setIncidents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+  const [provisioningToken, setProvisioningToken] = useState<string | null>(null);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { 
+    fetchData(); 
+    
+    // Poll for permission requests every 3 seconds
+    const interval = setInterval(async () => {
+      try {
+        const meRes = await fetch("/api/employee/me");
+        const meData = await meRes.json();
+        if (meData?.employee?.email) {
+          const res = await fetch(`/api/permission-requests?email=${meData.employee.email}`);
+          const data = await res.json();
+          if (data.requests) setPendingRequests(data.requests);
+        }
+      } catch (e) {}
+    }, 3000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -28,6 +47,31 @@ export default function EmployeeDashboardPage() {
       setIncidents((await incRes.json()).incidents || []);
     } catch (e) { console.error(e); }
     setIsLoading(false);
+  };
+
+  const handleProvisionAgent = async () => {
+    try {
+      const res = await fetch("/api/agent/provision", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: data.employee.email })
+      });
+      const json = await res.json();
+      if (json.success) {
+        setProvisioningToken(json.token);
+      }
+    } catch (e) { console.error(e); }
+  };
+
+  const handleRequestAction = async (id: string, action: "approve" | "deny") => {
+    try {
+      await fetch(`/api/permission-requests/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action })
+      });
+      setPendingRequests(prev => prev.filter(r => r.id !== id));
+    } catch (e) { console.error(e); }
   };
 
   const riskColor = (score: number) => {
@@ -86,6 +130,47 @@ export default function EmployeeDashboardPage() {
         .section-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); margin-bottom: 14px; }
       `}} />
 
+      {/* ── Permission Requests Banner ── */}
+      {pendingRequests.map(req => (
+        <div key={req.id} style={{
+          background: "rgba(20, 30, 40, 0.8)",
+          backdropFilter: "blur(12px)",
+          border: "1px solid rgba(141, 208, 194, 0.4)",
+          borderRadius: "16px",
+          padding: "20px 24px",
+          marginBottom: "24px",
+          display: "flex",
+          alignItems: "flex-start",
+          gap: "16px",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.3)"
+        }}>
+          <div style={{ fontSize: "24px" }}>🔔</div>
+          <div style={{ flex: 1 }}>
+            <h4 style={{ margin: "0 0 4px 0", color: "var(--accent)" }}>Security Team Request</h4>
+            <p style={{ margin: "0 0 8px 0", fontSize: "0.95rem" }}>
+              Your analyst is requesting access to: <strong>{req.permissionKey.replace("int", "")} Telemetry</strong>
+            </p>
+            <div style={{ background: "rgba(0,0,0,0.2)", padding: "10px 14px", borderRadius: "8px", fontSize: "0.85rem", fontStyle: "italic", marginBottom: "16px" }}>
+              Reason: "{req.reason}"
+            </div>
+            <div style={{ display: "flex", gap: "12px" }}>
+              <button 
+                onClick={() => handleRequestAction(req.id, "deny")}
+                style={{ padding: "8px 16px", background: "transparent", border: "1px solid rgba(255,133,120,0.3)", color: "var(--danger)", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600 }}
+              >
+                Deny
+              </button>
+              <button 
+                onClick={() => handleRequestAction(req.id, "approve")}
+                style={{ padding: "8px 16px", background: "var(--accent)", border: "none", color: "#000", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontWeight: 700 }}
+              >
+                Approve Access
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+
       {/* ── Hero welcome strip ── */}
       <div className="ov-hero">
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
@@ -100,7 +185,7 @@ export default function EmployeeDashboardPage() {
               {emp.department} &nbsp;·&nbsp; {emp.email}
             </p>
             {unreadAlerts > 0 && (
-              <div style={{ marginTop: 14 }}>
+              <div style={{ marginTop: 14, marginBottom: 14 }}>
                 <Link href="/dashboard/alerts" style={{
                   display: "inline-flex", alignItems: "center", gap: 8,
                   padding: "8px 16px", borderRadius: 20,
@@ -112,6 +197,17 @@ export default function EmployeeDashboardPage() {
                 </Link>
               </div>
             )}
+            
+            <div style={{ marginTop: unreadAlerts > 0 ? 0 : 14 }}>
+              <div style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                padding: "6px 12px", borderRadius: 6,
+                background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
+                color: "var(--muted)", fontSize: "0.75rem", fontWeight: 600,
+              }}>
+                <span style={{ color: "var(--success)" }}>🔒</span> Managed by Corporate IT (MDM)
+              </div>
+            </div>
           </div>
 
           {/* Risk Gauge */}

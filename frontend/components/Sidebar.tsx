@@ -5,40 +5,52 @@ import { usePathname } from "next/navigation";
 
 const links = [
   {
-    href:  "/",
+    href:  "/analyst",
     icon:  "⬡",
     label: "Dashboard",
     note:  "Overview & live activity",
   },
   {
-    href:  "/alerts",
+    href:  "/analyst/alerts",
     icon:  "◈",
     label: "Threat Monitor",
     note:  "Alert queue & triage",
   },
   {
-    href:  "/incidents",
+    href:  "/analyst/incidents",
     icon:  "⚠️",
     label: "Employee Reports",
     note:  "Suspicious emails reported",
   },
   {
-    href:  "/users",
+    href:  "/analyst/users",
     icon:  "◉",
     label: "Employee Risk",
     note:  "Exposure rankings & training",
   },
   {
-    href:  "/pending-signups",
+    href:  "/analyst/pending-signups",
     icon:  "👤",
     label: "Pending Signups",
     note:  "Approve new accounts",
   },
   {
-    href:  "/access-requests",
+    href:  "/analyst/access-requests",
     icon:  "🛡️",
     label: "Live Verifications",
     note:  "Zero-Trust onboarding queue",
+  },
+  {
+    href:  "/analyst/permissions",
+    icon:  "🔑",
+    label: "Permissions",
+    note:  "Employee data access",
+  },
+  {
+    href:  "/analyst/stream",
+    icon:  "📡",
+    label: "Live Stream",
+    note:  "Raw endpoint telemetry",
   },
 ];
 
@@ -46,7 +58,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   function isActive(href: string) {
-    if (href === "/") return pathname === "/";
+    if (href === "/analyst") return pathname === "/analyst";
     return pathname.startsWith(href);
   }
 

@@ -53,7 +53,7 @@ export async function POST(request: Request) {
       if (!analyst) {
         return NextResponse.json({ error: "Analyst account not found" }, { status: 404 });
       }
-      const res = NextResponse.json({ success: true, redirectTo: "/" });
+      const res = NextResponse.json({ success: true, redirectTo: "/analyst" });
       return setAnalystCookie(res, {
         id: analyst.id,
         email: analyst.email,

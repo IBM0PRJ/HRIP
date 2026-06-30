@@ -18,8 +18,19 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Analyst routes (Dashboard, alerts, users, etc.)
-  const analystRoutes = ['/', '/alerts', '/users', '/access-requests', '/incidents', '/pending-signups'];
+  // Root path redirect
+  if (pathname === '/') {
+    if (request.cookies.has('analyst_session')) {
+      return NextResponse.redirect(new URL('/analyst', request.url));
+    }
+    if (request.cookies.has('emp_session')) {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  // Analyst routes
+  const analystRoutes = ['/analyst', '/analyst/alerts', '/analyst/users', '/analyst/access-requests', '/analyst/incidents', '/analyst/pending-signups'];
   const isAnalystRoute = analystRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`));
   const isAnalystApi = pathname.startsWith('/api/analyst');
   

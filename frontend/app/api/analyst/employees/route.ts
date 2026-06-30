@@ -18,11 +18,12 @@ export async function GET(request: Request) {
       }
     });
 
-    // For sessions, we'll fetch them separately and attach
     const sessions = await prisma.session.findMany();
+    const agentTokens = await prisma.agentToken.findMany();
     
     const formattedEmployees = employees.map(emp => {
       const session = sessions.find(s => s.email === emp.email);
+      const hasAgent = agentTokens.some(t => t.employeeEmail === emp.email);
       return {
         id: emp.id,
         name: emp.name,
@@ -32,6 +33,7 @@ export async function GET(request: Request) {
         isVerified: emp.isVerified,
         openAlerts: emp._count.alerts,
         sessionState: session?.state || "inactive",
+        agentDeployed: hasAgent,
         integrations: session ? {
           email: session.intEmail,
           sms: session.intSms,

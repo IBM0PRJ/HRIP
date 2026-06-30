@@ -39,8 +39,13 @@ export async function POST(req: Request) {
     }
 
     // Generate a telemetry log message
-    const action = status ? "initialized" : "disabled";
-    const message = `[System] Integration '${integration}' monitoring ${action}.`;
+    let action = status ? "initialized" : "disabled";
+    let message = `[System] Integration '${integration}' monitoring ${action}.`;
+    
+    // Check if body has revokedByAnalyst
+    if (body.revokedByAnalyst && status === false) {
+        message = `[Analyst] Revoked '${integration}' permission.`;
+    }
 
     const log = await prisma.telemetryLog.create({
       data: {

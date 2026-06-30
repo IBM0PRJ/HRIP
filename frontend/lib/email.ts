@@ -1,5 +1,23 @@
 import nodemailer from "nodemailer";
 
+// ─── Permanent Safety Guard ──────────────────────────────────────────────────
+// These domains are used ONLY by the e2e test suite and are never real addresses.
+// Block them unconditionally at the module level, completely independent of env
+// variables or how the server was started. This is the root-level fix to stop
+// Gmail "Delivery Incomplete" bounce-back emails being sent to the developer.
+const BLOCKED_TEST_DOMAINS = [
+  "@company.com",
+  "@example.net",
+  "@test.com",
+  "@localhost",
+];
+
+function isTestEmail(email: string): boolean {
+  const lower = email.toLowerCase();
+  return BLOCKED_TEST_DOMAINS.some((domain) => lower.endsWith(domain));
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || "smtp.gmail.com",
   port: parseInt(process.env.SMTP_PORT || "587", 10),
@@ -16,6 +34,12 @@ const transporter = nodemailer.createTransport({
 const getFromStr = () => `HRIP Security <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USERNAME}>`;
 
 export async function sendOTPEmail(to: string, code: string, purpose: string): Promise<void> {
+  // Block all test/fake domains before touching SMTP
+  if (isTestEmail(to)) {
+    console.log(`[Email Mock] Blocked test domain. Skipping OTP to ${to}: ${code} (${purpose})`);
+    return;
+  }
+
   const isEmployee = purpose === "employee_signup";
   
   const subject = isEmployee 
@@ -34,7 +58,7 @@ export async function sendOTPEmail(to: string, code: string, purpose: string): P
   `;
 
   try {
-    if (process.env.SMTP_ENABLED === "false" || process.env.NODE_ENV === "test" || to.endsWith("@company.com")) {
+    if (process.env.SMTP_ENABLED === "false" || process.env.NODE_ENV === "test") {
       console.log(`[Email Mock] Sending OTP to ${to}: ${code} (${purpose})`);
       return;
     }
@@ -51,6 +75,12 @@ export async function sendOTPEmail(to: string, code: string, purpose: string): P
 }
 
 export async function sendApprovalEmail(to: string, type: "employee" | "analyst", action: "approve" | "deny"): Promise<void> {
+  // Block all test/fake domains before touching SMTP
+  if (isTestEmail(to)) {
+    console.log(`[Email Mock] Blocked test domain. Skipping approval email to ${to}: type=${type}, action=${action}`);
+    return;
+  }
+
   const isApproved = action === "approve";
   const subject = isApproved 
     ? `Your HRIP ${type === "employee" ? "Employee" : "Analyst"} Account is Approved` 
@@ -68,7 +98,7 @@ export async function sendApprovalEmail(to: string, type: "employee" | "analyst"
   `;
 
   try {
-    if (process.env.SMTP_ENABLED === "false" || process.env.NODE_ENV === "test" || to.endsWith("@company.com")) {
+    if (process.env.SMTP_ENABLED === "false" || process.env.NODE_ENV === "test") {
       console.log(`[Email Mock] Sending approval email to ${to}: type=${type}, action=${action}`);
       return;
     }

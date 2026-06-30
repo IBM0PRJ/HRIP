@@ -40,14 +40,51 @@ The Next.js frontend has been upgraded with a **Live Telemetry Stream**.
 
 ---
 
-## Quick start (Full Stack)
+## 🚀 Beginner-Friendly Quick Start
 
-1. Copy `.env.example` to `.env`.
-2. Install backend dependencies with `python -m pip install -e .[dev]`.
-3. Bootstrap the database and demo users with `make bootstrap`.
-4. Start the stack with `docker compose up --build`.
-5. Open the frontend at `http://localhost:3000`.
-6. Use the gateway at `http://localhost:8001` and the analyst API at `http://localhost:8000`.
+This project is split into two parts: the Web Dashboard (Next.js) and the Telemetry Agent (Python). You can run them both easily on your local machine to test the platform.
+
+### Step 1: Start the Web Dashboard
+Open your terminal and run the following commands to start the Analyst Dashboard:
+
+```bash
+# Navigate to the frontend directory
+cd frontend
+
+# Install the necessary Node packages
+npm install
+
+# Initialize the local SQLite testing database
+npx prisma db push
+
+# Start the local development server
+npm run dev
+```
+Once it says "Ready", open your browser and go to **`http://localhost:3000`**.
+
+### Step 2: Start the Native Telemetry Agent
+Open a *second* new terminal window to start the background telemetry agent:
+
+```bash
+# Navigate to the agent directory
+cd agent
+
+# Install the required Python libraries
+pip install -r requirements.txt
+```
+
+**To run it temporarily:** Simply type `python agent.py`.
+**To install it permanently (Enterprise MDM Simulation):** Run `.\deploy_mdm.ps1`. This will compile the agent to a silent executable and place it in your Windows Startup folder so it runs invisibly in the background.
+
+### Step 3: Test the Platform!
+1. Go to **`http://localhost:3000`** and log in with the demo Analyst account:
+   - **Email:** `analyst@example.com`
+   - **Password:** `Analyst123!`
+2. Navigate to **Permissions**, click **Deploy via MDM**, and request tracking access for a demo employee.
+3. Open a new tab, navigate to the **Employee Portal** (using the employee's email), and click **Approve Access**.
+4. Go back to the Analyst Dashboard and open the **Live Stream** to watch your actual computer's OS telemetry flow in real-time!
+
+---
 
 ## Demo accounts
 

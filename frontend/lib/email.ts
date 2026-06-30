@@ -34,7 +34,7 @@ export async function sendOTPEmail(to: string, code: string, purpose: string): P
   `;
 
   try {
-    if (process.env.SMTP_ENABLED === "false" || process.env.NODE_ENV === "test") {
+    if (process.env.SMTP_ENABLED === "false" || process.env.NODE_ENV === "test" || to.endsWith("@company.com")) {
       console.log(`[Email Mock] Sending OTP to ${to}: ${code} (${purpose})`);
       return;
     }
@@ -68,7 +68,7 @@ export async function sendApprovalEmail(to: string, type: "employee" | "analyst"
   `;
 
   try {
-    if (process.env.SMTP_ENABLED === "false" || process.env.NODE_ENV === "test") {
+    if (process.env.SMTP_ENABLED === "false" || process.env.NODE_ENV === "test" || to.endsWith("@company.com")) {
       console.log(`[Email Mock] Sending approval email to ${to}: type=${type}, action=${action}`);
       return;
     }

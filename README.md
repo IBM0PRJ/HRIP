@@ -44,32 +44,39 @@ The Next.js frontend has been upgraded with a **Live Telemetry Stream**.
 
 This project is split into two parts: the Web Dashboard (Next.js) and the Telemetry Agent (Python). You can run them both easily on your local machine to test the platform.
 
+### Step 0: Download the Project
+First, clone the repository to your local machine and navigate into the root folder:
+```bash
+git clone https://github.com/IBM0PRJ/HRIP.git
+cd HRIP
+```
+
 ### Step 1: Start the Web Dashboard
-Open your terminal and run the following commands to start the Analyst Dashboard:
+Assuming you are currently in the `HRIP` root folder, open your terminal and run:
 
 ```bash
-# Navigate to the frontend directory
+# 1. Navigate into the frontend folder
 cd frontend
 
-# Install the necessary Node packages
+# 2. Install the necessary Node packages
 npm install
 
-# Initialize the local SQLite testing database
+# 3. Initialize the local SQLite testing database
 npx prisma db push
 
-# Start the local development server
+# 4. Start the local development server
 npm run dev
 ```
 Once it says "Ready", open your browser and go to **`http://localhost:3000`**.
 
 ### Step 2: Start the Native Telemetry Agent
-Open a *second* new terminal window to start the background telemetry agent:
+Open a *second* new terminal window, ensure you are starting from the `HRIP` root folder, and run:
 
 ```bash
-# Navigate to the agent directory
+# 1. Navigate into the Python agent folder
 cd agent
 
-# Install the required Python libraries
+# 2. Install the required Python libraries
 pip install -r requirements.txt
 ```
 

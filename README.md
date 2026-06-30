@@ -1,55 +1,55 @@
 # HRIP (Human Risk Intelligence Platform)
 
-Human Risk Intelligence Platform monorepo for multi-channel social engineering detection and active endpoint telemetry.
+Human Risk Intelligence Platform monorepo for multi-channel social engineering detection and active endpoint telemetry. 
 
-## Core Architecture Stack
+The platform intercepts phishing (Email, SMS, Voice) at the gateway level and correlates it with real-time zero-trust endpoint telemetry (USB, Clipboard, Process) collected directly from employee workstations.
 
-- **FastAPI Microservices**: Backend ingestion, detection, and risk scoring.
-- **PostgreSQL**: System-of-record storage.
-- **Redis Streams**: Event backbone for asynchronous processing.
-- **Next.js (App Router)**: Analyst dashboard and Employee portal shell.
+---
+
+## 🏗️ Architecture Stack
+
+The platform is designed as a distributed, enterprise-grade system:
+- **Next.js (App Router)**: The Analyst Dashboard and Employee Portal shell.
 - **Python Endpoint Agent**: Native OS telemetry collector for zero-trust visibility.
+- **FastAPI Microservices**: Specialized backend workers (Gateway, Preprocessing, Detection, Risk, API).
+- **PostgreSQL**: System-of-record storage.
+- **Redis Streams**: High-throughput event backbone for asynchronous microservice communication.
 
 ---
 
-## 🎯 NEW: Native Telemetry Agent (Windows Endpoint)
+## 🐳 Enterprise Deployment (Docker Compose)
 
-HRIP now includes a fully native Python agent deployed directly to employee endpoints to monitor physical and digital behavior in real time. 
+The standard enterprise deployment runs the entire microservice architecture inside Docker. This sets up Postgres, Redis, the 5 FastAPI services, and the Next.js frontend automatically.
 
-### Key Agent Capabilities
-1. **Foreground Application Tracking**: Uses `win32gui` to detect precisely what application the user is actively focused on (e.g., *WhatsApp*, *Chrome*), filtering out system background noise.
-2. **Hardware Intercepts (WMI)**: Directly hooks into Windows Management Instrumentation to instantly detect when unauthorized USB storage devices are plugged in, utilizing native debounce to prevent event spam.
-3. **Clipboard Monitoring**: Hooks into the OS clipboard buffer. Safely ignores general text, but aggressively flags and intercepts sensitive patterns like 16-digit credit card numbers or AWS API keys (`sk-...`).
-4. **Local File Scanning**: Natively walks user directories (e.g., `~/Documents`) to proactively detect files containing sensitive naming conventions (*"salary"*, *"passwords"*).
-5. **Network Fingerprinting**: Monitors active connection adapters and flags suspicious routing changes (like unauthorized VPN usage).
+### 1. Prerequisites
+- Docker Desktop installed and running.
+- Python 3.10+ (for running bootstrap scripts).
 
-### Enterprise MDM Deployment
-The agent is designed for silent enterprise deployment. The included `deploy_mdm.ps1` script fully automates the process by:
-- Using `pyinstaller` to compile the Python agent into a standalone, windowless executable (`agent.exe`).
-- Enforcing `--noconsole` so the agent runs completely invisibly with no taskbar footprint.
-- Programmatically injecting a shortcut into the native Windows `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup` folder for permanent, silent boot persistence.
+### 2. Setup & Boot
+1. Copy the environment file:
+   ```bash
+   cp .env.example .env
+   ```
+2. Create the necessary database tables and seed demo data:
+   ```bash
+   make bootstrap
+   ```
+3. Start the entire distributed stack:
+   ```bash
+   docker compose up --build
+   ```
+
+### 3. Accessing the Platform
+Once Docker finishes building and starting the containers:
+- **Analyst Dashboard**: `http://localhost:3001` (Docker binds frontend to 3001)
+- **Ingestion Gateway**: `http://localhost:8001`
+- **Analyst Read API**: `http://localhost:8000`
 
 ---
 
-## 💻 Analyst Live Stream Dashboard
+## 🚀 Local Development Setup (Beginner Friendly)
 
-The Next.js frontend has been upgraded with a **Live Telemetry Stream**.
-- Security analysts can monitor raw OS-level events flowing from employee laptops in real-time.
-- Features category-specific pill filters (All, Process, USB, Network, Files, Clipboard) for rapid triage.
-- Bi-directional sync with the database ensures immediate visibility as soon as the background `.exe` captures an OS event.
-
----
-
-## 🚀 Beginner-Friendly Quick Start
-
-This project is split into two parts: the Web Dashboard (Next.js) and the Telemetry Agent (Python). You can run them both easily on your local machine to test the platform.
-
-### Step 0: Download the Project
-First, clone the repository to your local machine and navigate into the root folder:
-```bash
-git clone https://github.com/IBM0PRJ/HRIP.git
-cd HRIP
-```
+If you are a developer looking to test the Next.js dashboard locally without spinning up the heavy Docker backend, use this local testing flow.
 
 ### Step 1: Start the Web Dashboard
 Assuming you are currently in the `HRIP` root folder, open your terminal and run:
@@ -81,43 +81,45 @@ pip install -r requirements.txt
 ```
 
 **To run it temporarily:** Simply type `python agent.py`.
-**To install it permanently (Enterprise MDM Simulation):** Run `.\deploy_mdm.ps1`. This will compile the agent to a silent executable and place it in your Windows Startup folder so it runs invisibly in the background.
-
-### Step 3: Test the Platform!
-1. Go to **`http://localhost:3000`** and log in with the demo Analyst account:
-   - **Email:** `analyst@example.com`
-   - **Password:** `Analyst123!`
-2. Navigate to **Permissions**, click **Deploy via MDM**, and request tracking access for a demo employee.
-3. Open a new tab, navigate to the **Employee Portal** (using the employee's email), and click **Approve Access**.
-4. Go back to the Analyst Dashboard and open the **Live Stream** to watch your actual computer's OS telemetry flow in real-time!
+**To install it permanently (MDM Simulation):** Run `.\deploy_mdm.ps1`. This compiles the agent to a silent executable and places it in your Windows Startup folder so it runs invisibly.
 
 ---
 
-## Demo accounts
+## 🎯 Native Telemetry Agent Capabilities
 
-- `admin@example.com` / `ChangeMe123!`
-- `analyst@example.com` / `Analyst123!`
-- `cfo@example.com` / `Employee123!`
+HRIP includes a fully native Python agent deployed directly to Windows endpoints to monitor real-time physical and digital behavior:
 
-## Utility commands
+1. **Foreground Application Tracking**: Uses `win32gui` to detect precisely what application the user is actively focused on (e.g., *WhatsApp*, *Chrome*), filtering out background noise.
+2. **Hardware Intercepts (WMI)**: Directly hooks into Windows Management Instrumentation to instantly detect unauthorized USB storage devices.
+3. **Clipboard Monitoring**: Hooks into the OS clipboard. Safely ignores general text, but aggressively intercepts sensitive patterns like 16-digit credit card numbers or AWS API keys (`sk-...`).
+4. **Local File Scanning**: Natively walks user directories to proactively detect files containing sensitive naming conventions (*"salary"*, *"passwords"*).
+5. **Network Fingerprinting**: Monitors active connection adapters and flags suspicious routing changes.
 
-- `make bootstrap`: create tables and seed demo data
-- `make smoke`: login, ingest a phishing sample, and fetch alert visibility
-- `pytest`: run the current automated test suite
+---
 
-## Voice demo mode
+## 🛠️ Utility Commands
 
-- Set `VOICE_INGEST_ENABLED=true` to enable `POST /api/v1/ingest/voice`.
-- The first implementation stores audio safely under `VOICE_UPLOAD_DIR`, validates MIME and size limits, and derives a local transcript from the uploaded filename when Whisper is not wired in yet.
-- For a deterministic local demo, use filenames that contain threat words such as `urgent-otp-call.wav` or `wire-transfer-request.wav`.
-- The dashboard home page now includes demo launch controls for email, SMS, and voice scenarios so you can generate analyst traffic without running separate scripts.
+From the root directory, you can run the following `make` commands:
+- `make bootstrap`: Creates Postgres tables and seeds demo data.
+- `make smoke`: Logs in, ingests a mock phishing sample, and tests alert visibility pipeline.
+- `make test`: Runs the backend `pytest` suite.
+- `make lint`: Runs `ruff` to lint Python code.
 
-## Services Map
+---
 
-- `agent`: Native Windows Telemetry Collector
-- `gateway`: Ingestion and Auth
-- `preprocessing`: Text cleanup and URL extraction worker
-- `detection`: Rule-based and baseline ML detection worker
-- `risk`: Alerting and risk scoring worker
-- `api`: Analyst-facing read APIs
-- `frontend`: Dashboard shell
+## 🎤 Voice Demo Mode
+
+The platform supports ingesting malicious deepfake voice calls (Vishing).
+- Set `VOICE_INGEST_ENABLED=true` in your `.env` to enable `POST /api/v1/ingest/voice`.
+- For a deterministic local demo, upload `.wav` files that contain threat words in the filename such as `urgent-otp-call.wav` or `wire-transfer-request.wav`.
+- Set `WHISPER_ENABLED=true` only when a Whisper backend (like `faster-whisper`) is installed in the runtime image. Otherwise, it safely falls back to filename-derived mock transcripts.
+
+---
+
+## 🔑 Demo Accounts
+
+Use these accounts to test the platform (works in both Docker and Local Development modes):
+
+- **Admin Account**: `admin@example.com` / `ChangeMe123!`
+- **Analyst Account**: `analyst@example.com` / `Analyst123!`
+- **Employee Account**: `cfo@example.com` / `Employee123!`

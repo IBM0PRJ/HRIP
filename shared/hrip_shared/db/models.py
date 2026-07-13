@@ -26,6 +26,12 @@ class User(Base):
     privilege: Mapped[str] = mapped_column(String(50), default="standard")
     password_hash: Mapped[str] = mapped_column(String(255))
     risk_score: Mapped[float] = mapped_column(Float, default=0.0)
+    risk_tier: Mapped[str] = mapped_column(String(20), default="safe")
+    data_access_level: Mapped[str] = mapped_column(String(20), default="full")
+    score_manually_set: Mapped[bool] = mapped_column(Boolean, default=False)
+    score_override_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    score_override_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    score_override_note: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
@@ -85,6 +91,7 @@ class DetectionFeature(Base):
     detection_id: Mapped[str] = mapped_column(ForeignKey("detections.id"), index=True)
     feature_name: Mapped[str] = mapped_column(String(100))
     feature_value: Mapped[float] = mapped_column(Float)
+    feature_string: Mapped[str | None] = mapped_column(Text, nullable=True)
     shap_contribution: Mapped[float] = mapped_column(Float)
 
 
@@ -108,6 +115,44 @@ class RiskScore(Base):
     score: Mapped[float] = mapped_column(Float)
     severity: Mapped[str] = mapped_column(String(20))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class RiskEvent(Base):
+    __tablename__ = "risk_events"
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    source: Mapped[str] = mapped_column(String(50))  # "detection", "usb", "login", "file_access", "training_passed", "analyst_override", "time_decay"
+    old_score: Mapped[float] = mapped_column(Float)
+    new_score: Mapped[float] = mapped_column(Float)
+    delta: Mapped[float] = mapped_column(Float)
+    analyst_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class TrainingModule(Base):
+    __tablename__ = "training_modules"
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid4()))
+    title: Mapped[str] = mapped_column(String(255))
+    threat_type: Mapped[str] = mapped_column(String(50), unique=True)
+    video_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    reading_material_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    quiz_json: Mapped[dict] = mapped_column(JSONType, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class TrainingAssignment(Base):
+    __tablename__ = "training_assignments"
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    module_id: Mapped[str] = mapped_column(ForeignKey("training_modules.id"))
+    assigned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    quiz_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    passed: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class OutboxEvent(Base):
@@ -141,3 +186,32 @@ class RefreshToken(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
+
+class AIFlag(Base):
+    __tablename__ = "ai_flags"
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    source: Mapped[str] = mapped_column(String(50))  # "usb", "network", "file_access", "clipboard", "login"
+    event_data: Mapped[dict] = mapped_column(JSONType, default=dict)  # raw event payload
+    suspicion_score: Mapped[float] = mapped_column(Float)
+    threat_category: Mapped[str] = mapped_column(String(100))
+    evidence_items: Mapped[dict] = mapped_column(JSONType, default=list)  # list of evidence strings
+    employee_context: Mapped[dict] = mapped_column(JSONType, default=dict)  # risk_score, recent_flags, etc.
+    recommended_action: Mapped[str | None] = mapped_column(Text, nullable=True)
+    qwen_reasoning: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(20), default="pending")  # pending, confirmed, dismissed, escalated
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    reviewed_by: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class AnalystAction(Base):
+    __tablename__ = "analyst_actions"
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid4()))
+    flag_id: Mapped[str] = mapped_column(ForeignKey("ai_flags.id"), index=True)
+    action_type: Mapped[str] = mapped_column(String(50))  # session_suspend, usb_block, network_disconnect, file_quarantine, notify, training
+    payload: Mapped[dict] = mapped_column(JSONType, default=dict)  # custom message, device_id, duration, etc.
+    executed_by: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    executed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

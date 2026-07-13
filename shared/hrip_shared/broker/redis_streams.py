@@ -11,7 +11,14 @@ from .interfaces import EventConsumer, EventPublisher
 
 class RedisStreamBroker(EventPublisher, EventConsumer):
     def __init__(self, redis_url: str | None = None) -> None:
-        self.redis = Redis.from_url(redis_url or get_settings().redis_url, decode_responses=True)
+        self.redis_url = redis_url or get_settings().redis_url
+        self._redis = None
+
+    @property
+    def redis(self) -> Redis:
+        if self._redis is None:
+            self._redis = Redis.from_url(self.redis_url, decode_responses=True)
+        return self._redis
 
     async def publish(self, stream: str, payload: dict, event_id: str | None = None) -> str:
         event_payload = {"payload": json.dumps(payload), "event_id": event_id or payload.get("message_id", "")}
@@ -33,6 +40,7 @@ class RedisStreamBroker(EventPublisher, EventConsumer):
                 continue
             for _, entries in messages:
                 for entry_id, values in entries:
+                    print(f"[redis_streams] GOT MESSAGE: {entry_id} for stream {stream}", flush=True)
                     payload = json.loads(values["payload"])
                     await handler(entry_id, payload)
                     await self.redis.xack(stream, group, entry_id)

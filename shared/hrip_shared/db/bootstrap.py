@@ -6,8 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from hrip_shared.auth.passwords import hash_password
 
-from .models import Alert, Detection, DetectionFeature, Message, MessageMetadata, RiskScore, User
-
+from .models import Alert, Detection, DetectionFeature, Message, MessageMetadata, RiskScore, User, TrainingModule
 
 async def seed_demo_data(session: AsyncSession) -> None:
     existing = await session.execute(select(User.id).where(User.email != "admin@example.com").limit(1))
@@ -168,5 +167,45 @@ async def seed_demo_data(session: AsyncSession) -> None:
                 created_at=now - timedelta(days=index),
             )
         )
+
+    training_modules = [
+        TrainingModule(
+            id=str(uuid4()),
+            title="Defeating CEO Fraud & Business Email Compromise",
+            threat_type="CEO_fraud",
+            video_url="https://example.com/training/ceo_fraud.mp4",
+            reading_material_url="https://example.com/docs/ceo_fraud.pdf",
+            quiz_json={
+                "questions": [
+                    {"q": "What should you do if the CEO urgently requests a wire transfer via email?", "options": ["Process it immediately", "Call them to verify", "Forward to a friend"], "answer": 1}
+                ]
+            }
+        ),
+        TrainingModule(
+            id=str(uuid4()),
+            title="Smishing and Mobile Security",
+            threat_type="smishing",
+            video_url="https://example.com/training/smishing.mp4",
+            reading_material_url="https://example.com/docs/smishing.pdf",
+            quiz_json={
+                "questions": [
+                    {"q": "Is it safe to click a password reset link in an unexpected SMS?", "options": ["Yes", "No, never"], "answer": 1}
+                ]
+            }
+        ),
+        TrainingModule(
+            id=str(uuid4()),
+            title="General Phishing Hygiene",
+            threat_type="phishing",
+            video_url="https://example.com/training/phishing.mp4",
+            reading_material_url="https://example.com/docs/phishing.pdf",
+            quiz_json={
+                "questions": [
+                    {"q": "Which of these is a red flag in an email?", "options": ["Generic greeting", "Urgent language", "Both"], "answer": 2}
+                ]
+            }
+        )
+    ]
+    session.add_all(training_modules)
 
     await session.commit()

@@ -44,9 +44,18 @@ def classify_threat(text: str, channel: str, intel_hit: bool) -> str:
     return "benign"
 
 
-def baseline_lgbm_confidence(text: str, url_count: int, rules: float) -> float:
-    base = min(0.98, 0.2 + (rules / 100) * 0.6 + min(url_count, 3) * 0.08)
-    return round(base, 3)
+def extract_features(text: str) -> list[float]:
+    score, psycho = rules_score(text)
+    return [
+        psycho.get("urgency", 0),
+        psycho.get("authority", 0),
+        psycho.get("fear", 0),
+        psycho.get("financial", 0),
+        psycho.get("secrecy", 0),
+        psycho.get("scarcity", 0),
+        score / 100.0,
+        len(text) / 1000.0,
+    ]
 
 
 def optional_roberta_confidence(lgbm_conf: float, enabled: bool) -> float:

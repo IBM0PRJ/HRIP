@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import prisma from "../../../../lib/db";
 import { getAnalystFromRequest } from "../../../../lib/session";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   try {
     const analyst = await getAnalystFromRequest();

@@ -235,3 +235,68 @@ export async function getUserProfile(userId: string) {
 export function getGatewayUrl() {
   return gatewayUrl;
 }
+
+export type AIFlag = {
+  id: string;
+  user_id: string;
+  user_name: string;
+  source: string;
+  suspicion_score: number;
+  threat_category: string;
+  status: string;
+  created_at: string;
+  qwen_reasoning: string | null;
+  evidence_items: string[];
+  employee_context: any;
+  recommended_action: string | null;
+};
+
+export async function getAIFlags() {
+  const accessToken = await getAccessToken();
+  const response = await fetch(`${gatewayUrl}/api/v1/flags`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    cache: "no-store"
+  });
+  if (!response.ok) throw new Error(`Failed to fetch AI flags: ${response.status}`);
+  return response.json() as Promise<AIFlag[]>;
+}
+
+export async function getUserAIFlags(userId: string) {
+  const accessToken = await getAccessToken();
+  const response = await fetch(`${gatewayUrl}/api/v1/flags/user/${userId}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    cache: "no-store"
+  });
+  if (!response.ok) throw new Error(`Failed to fetch User AI flags: ${response.status}`);
+  return response.json() as Promise<AIFlag[]>;
+}
+
+export async function confirmAIFlag(flagId: string, analystId: string) {
+  const accessToken = await getAccessToken();
+  const response = await fetch(`${gatewayUrl}/api/v1/flags/${flagId}/confirm`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ analyst_id: analystId })
+  });
+  return response.json();
+}
+
+export async function dismissAIFlag(flagId: string, analystId: string) {
+  const accessToken = await getAccessToken();
+  const response = await fetch(`${gatewayUrl}/api/v1/flags/${flagId}/dismiss`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ analyst_id: analystId })
+  });
+  return response.json();
+}
+
+export async function executeAIFlagAction(flagId: string, analystId: string, actionType: string, payload: any) {
+  const accessToken = await getAccessToken();
+  const response = await fetch(`${gatewayUrl}/api/v1/flags/${flagId}/action`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ analyst_id: analystId, action_type: actionType, payload })
+  });
+  return response.json();
+}

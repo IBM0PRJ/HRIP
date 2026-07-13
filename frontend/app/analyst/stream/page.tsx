@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 
 type TelemetryEvent = {
   id: string;
@@ -13,10 +14,19 @@ type TelemetryEvent = {
   createdAt: string;
 };
 
-export default function TelemetryStream() {
+export default function TelemetryStreamPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 40, textAlign: "center", color: "var(--muted)" }}>Loading stream...</div>}>
+      <TelemetryStream />
+    </Suspense>
+  );
+}
+
+function TelemetryStream() {
+  const searchParams = useSearchParams();
   const [events, setEvents] = useState<TelemetryEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterEmail, setFilterEmail] = useState("");
+  const [filterEmail, setFilterEmail] = useState(searchParams.get("email") || "");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   useEffect(() => {

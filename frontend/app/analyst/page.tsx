@@ -58,7 +58,7 @@ export default async function HomePage() {
               <Link className="buttonPrimary" href="/analyst/alerts">
                 Open threat queue →
               </Link>
-              <Link className="buttonSecondary" href="/users">
+              <Link className="buttonSecondary" href="/analyst/users">
                 Review employee exposure
               </Link>
             </div>
@@ -104,7 +104,7 @@ export default async function HomePage() {
               <span className="muted" style={{ fontSize: "0.78rem" }}>
                 {highRiskUsers.length} at high or critical risk
               </span>
-              <Link className="tableLink" href="/users" style={{ fontSize: "0.8rem" }}>See all →</Link>
+              <Link className="tableLink" href="/analyst/users" style={{ fontSize: "0.8rem" }}>See all →</Link>
             </div>
           </div>
           
@@ -172,7 +172,7 @@ export default async function HomePage() {
                   Employees needing immediate training
                 </p>
               </div>
-              <Link className="tableLink" href="/users">View All</Link>
+              <Link className="tableLink" href="/analyst/users">View All</Link>
             </div>
             
             <div className="tableWrap" style={{ flex: 1 }}>
@@ -188,11 +188,11 @@ export default async function HomePage() {
                     <tr key={user.id}>
                       <td>
                         <div className="tableCell userCell">
-                          <Link href={`/users`} className="userAvatarLink">
+                          <Link href={`/analyst/users/${user.id}`} className="userAvatarLink">
                             <div className="userAvatar">{user.name.charAt(0)}</div>
                           </Link>
                           <div>
-                            <Link href={`/users`} className="userName textLink">
+                            <Link href={`/analyst/users/${user.id}`} className="userName textLink">
                               {user.name}
                             </Link>
                             <div className="userRole">{user.department}</div>

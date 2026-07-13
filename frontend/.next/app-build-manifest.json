@@ -1,35 +1,20 @@
 {
   "pages": {
-    "/(employee)/dashboard/page": [
+    "/analyst/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(employee)/dashboard/page.js"
-    ],
-    "/(employee)/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(employee)/layout.js"
-    ],
-    "/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/css/app/layout.css",
-      "static/chunks/app/layout.js"
-    ],
-    "/analyst/access-requests/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/analyst/access-requests/page.js"
+      "static/chunks/app/analyst/page.js"
     ],
     "/analyst/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/analyst/layout.js"
     ],
-    "/analyst/permissions/page": [
+    "/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/analyst/permissions/page.js"
+      "static/css/app/layout.css",
+      "static/chunks/app/layout.js"
     ],
     "/(auth)/login/page": [
       "static/chunks/webpack.js",
@@ -41,30 +26,40 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(auth)/onboarding/page.js"
     ],
-    "/analyst/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/analyst/page.js"
-    ],
     "/analyst/stream/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/analyst/stream/page.js"
     ],
-    "/(employee)/dashboard/incidents/page": [
+    "/analyst/access-requests/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(employee)/dashboard/incidents/page.js"
+      "static/chunks/app/analyst/access-requests/page.js"
     ],
-    "/(employee)/dashboard/activity/page": [
+    "/analyst/pending-signups/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(employee)/dashboard/activity/page.js"
+      "static/chunks/app/analyst/pending-signups/page.js"
     ],
-    "/(employee)/dashboard/alerts/page": [
+    "/analyst/users/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(employee)/dashboard/alerts/page.js"
+      "static/chunks/app/analyst/users/page.js"
+    ],
+    "/analyst/incidents/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/analyst/incidents/page.js"
+    ],
+    "/analyst/alerts/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/analyst/alerts/page.js"
+    ],
+    "/analyst/permissions/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/analyst/permissions/page.js"
     ]
   }
 }

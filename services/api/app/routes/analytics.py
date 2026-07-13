@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 
 from hrip_shared.auth.jwt import require_token
-from hrip_shared.db import Alert, Detection, DetectionFeature, Message, RiskScore, User, get_db
+from hrip_shared.db import Alert, Detection, DetectionFeature, Message, RiskEvent, User, get_db
 
 router = APIRouter(prefix="/api/v1", tags=["analytics"], dependencies=[Depends(require_token)])
 
@@ -363,7 +363,7 @@ async def user_profile(user_id: str, db: AsyncSession = Depends(get_db)) -> dict
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     risk_history = await db.execute(
-        select(RiskScore).where(RiskScore.user_id == user_id).order_by(desc(RiskScore.created_at)).limit(10)
+        select(RiskEvent).where(RiskEvent.user_id == user_id).order_by(desc(RiskEvent.created_at)).limit(10)
     )
     alerts = await db.execute(
         select(Alert, Detection, Message)
@@ -384,8 +384,8 @@ async def user_profile(user_id: str, db: AsyncSession = Depends(get_db)) -> dict
             "risk_score": user.risk_score,
         },
         "risk_history": [
-            {"score": score.score, "severity": score.severity, "created_at": score.created_at}
-            for score in risk_history.scalars().all()
+            {"score": event.new_score, "severity": score_to_severity(event.new_score) if "score_to_severity" in globals() else "high", "created_at": event.created_at}
+            for event in risk_history.scalars().all()
         ],
         "alerts": [
             {

@@ -7,6 +7,7 @@ hrip.egg-info/requires.txt
 hrip.egg-info/top_level.txt
 shared/hrip_shared/__init__.py
 shared/hrip_shared/settings.py
+shared/hrip_shared/voice.py
 shared/hrip_shared/auth/__init__.py
 shared/hrip_shared/auth/jwt.py
 shared/hrip_shared/auth/passwords.py
@@ -18,6 +19,7 @@ shared/hrip_shared/contracts/api.py
 shared/hrip_shared/contracts/events.py
 shared/hrip_shared/db/__init__.py
 shared/hrip_shared/db/base.py
+shared/hrip_shared/db/bootstrap.py
 shared/hrip_shared/db/models.py
 shared/hrip_shared/db/session.py
 shared/hrip_shared/services/idempotency.py

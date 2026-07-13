@@ -12,6 +12,7 @@ export default function EmployeeSignupPage() {
   const [email, setEmail] = useState("");
   const [department, setDepartment] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   
   const [otp, setOtp] = useState("");
   
@@ -74,91 +75,148 @@ export default function EmployeeSignupPage() {
   };
 
   return (
-    <div className="loginContainer">
-      <div className="loginCard">
-        <div className="loginHeader">
-          <div className="brandMark" style={{ margin: "0 auto 16px" }}>
+    <div className="glassLoginContainer">
+      {/* Ambient Orbs */}
+      <div className="glassOrb glassOrb--tl" />
+      <div className="glassOrb glassOrb--br" />
+
+      {/* Main Glass Card */}
+      <div className="glassLoginCard">
+        <div className="glassLoginHeader">
+          <div className="glassLogoBadge">
             <span>HRIP</span>
           </div>
-          <h2>Create Employee Account</h2>
-          <p className="muted" style={{ marginTop: 8 }}>
+          <h2 className="glassLoginTitle">Create Employee Account</h2>
+          <p className="glassLoginSubtitle">
             Join the Human Risk Intelligence Platform
           </p>
         </div>
 
         {step === 1 ? (
-          <form className="loginForm fadeIn delay0" onSubmit={handleSignup}>
-            {error && <div className="errorText" style={{ marginBottom: 16 }}>{error}</div>}
+          <form className="glassForm fadeIn delay0" onSubmit={handleSignup}>
+            {error && <div className="glassErrorText">{error}</div>}
             
-            <div className="inputGroup">
-              <label>Full Name</label>
-              <input type="text" placeholder="Sarah Jones" value={name} onChange={(e) => setName(e.target.value)} required />
-            </div>
-            
-            <div className="inputGroup">
-              <label>Work Email</label>
-              <input type="email" placeholder="sarah.j@company.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            </div>
-            
-            <div className="inputGroup">
-              <label>Department</label>
-              <input type="text" placeholder="Engineering" value={department} onChange={(e) => setDepartment(e.target.value)} required />
-            </div>
-            
-            <div className="inputGroup">
-              <label>Password</label>
-              <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
-            </div>
-            
-            <button type="submit" className="buttonPrimary" style={{ width: "100%", justifyContent: "center" }} disabled={isLoading}>
-              {isLoading ? "Creating..." : "Create Account"}
-            </button>
-            
-            <div style={{ textAlign: 'center', marginTop: 16 }}>
-              <Link href="/login" className="textLink" style={{ fontSize: '0.9rem' }}>
-                Already have an account? Sign in
-              </Link>
-            </div>
-          </form>
-        ) : (
-          <form className="loginForm fadeIn delay0" onSubmit={handleVerifyOTP}>
-            <div style={{ textAlign: "center", marginBottom: 20 }}>
-              <div className="roleIcon" style={{ margin: "0 auto 16px" }}>✉️</div>
-              <h3>Check your email</h3>
-              <p className="muted" style={{ fontSize: "0.85rem", marginTop: 8 }}>
-                We've sent a 6-digit verification code to<br />
-                <strong style={{ color: "#fff" }}>{email}</strong>
-              </p>
-            </div>
-            
-            {error && <div className="errorText" style={{ marginBottom: 16 }}>{error}</div>}
-            
-            <div className="inputGroup">
-              <label>Verification Code</label>
+            <div className="glassInputGroup">
+              <label className="glassLabel">Full Name</label>
               <input 
                 type="text" 
-                placeholder="123456" 
-                value={otp} 
-                onChange={(e) => setOtp(e.target.value)}
-                maxLength={6}
-                style={{ textAlign: "center", letterSpacing: "4px", fontSize: "1.2rem" }}
+                className="glassInput glassInput--employee"
+                placeholder="Sarah Jones" 
+                value={name} 
+                onChange={(e) => setName(e.target.value)} 
                 required 
               />
             </div>
             
-            <button type="submit" className="buttonPrimary" style={{ width: "100%", justifyContent: "center" }} disabled={isLoading}>
-              {isLoading ? "Verifying..." : "Verify & Continue"}
+            <div className="glassInputGroup">
+              <label className="glassLabel">Work Email</label>
+              <input 
+                type="email" 
+                className="glassInput glassInput--employee"
+                placeholder="sarah.j@company.com" 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)} 
+                required 
+              />
+            </div>
+            
+            <div className="glassInputGroup">
+              <label className="glassLabel">Department</label>
+              <input 
+                type="text" 
+                className="glassInput glassInput--employee"
+                placeholder="Engineering" 
+                value={department} 
+                onChange={(e) => setDepartment(e.target.value)} 
+                required 
+              />
+            </div>
+            
+            <div className="glassInputGroup">
+              <label className="glassLabel">Password</label>
+              <div style={{ position: "relative" }}>
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  className="glassInput glassInput--employee"
+                  placeholder="••••••••" 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  required 
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: "absolute",
+                    right: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    color: "rgba(255,255,255,0.5)",
+                    cursor: "pointer",
+                    padding: "4px"
+                  }}
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? "👁️‍🗨️" : "👁️"}
+                </button>
+              </div>
+            </div>
+            
+            <button type="submit" className="glassSubmitBtn glassSubmitBtn--employee" style={{ marginTop: "12px" }} disabled={isLoading}>
+              {isLoading ? "Creating..." : "Create Account"}
             </button>
             
-            <button type="button" className="textButton" style={{ marginTop: 16, width: "100%", justifyContent: "center" }} onClick={() => setStep(1)}>
-              Use a different email
+            <div className="glassFormFooter">
+              <div style={{ flex: 1 }} />
+              <Link href="/login" className="glassTextBtn glassTextBtn--accent">
+                Already have an account? Sign in →
+              </Link>
+            </div>
+          </form>
+        ) : (
+          <form className="glassForm fadeIn delay0" onSubmit={handleVerifyOTP}>
+            <div className="glassOtpBanner">
+              <span className="glassOtpBannerIcon">&#9993;</span>
+              <div>
+                <div className="glassOtpBannerTitle">Verification code sent</div>
+                <div className="glassOtpBannerText">
+                  We've sent a 6-digit verification code to <strong style={{ color: "var(--accent-2)" }}>{email}</strong>
+                </div>
+              </div>
+            </div>
+            
+            {error && <div className="glassErrorText">{error}</div>}
+            
+            <div className="glassInputGroup" style={{ marginTop: "16px" }}>
+              <label className="glassLabel" style={{ textAlign: "center" }}>6-Digit Security Code</label>
+              <input 
+                type="text" 
+                inputMode="numeric"
+                className="glassInput glassInput--employee"
+                placeholder="&bull; &bull; &bull; &bull; &bull; &bull;" 
+                value={otp} 
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                maxLength={6}
+                style={{ textAlign: "center", letterSpacing: "0.35em", fontSize: "1.4rem", fontWeight: "600", padding: "16px" }}
+                autoFocus
+                required 
+              />
+            </div>
+            
+            <button type="submit" className="glassSubmitBtn glassSubmitBtn--employee" style={{ marginTop: "12px" }} disabled={isLoading || otp.length !== 6}>
+              {isLoading ? "Verifying..." : "Verify & Continue →"}
             </button>
+            
+            <div className="glassFormFooter">
+              <button type="button" className="glassTextBtn" onClick={() => setStep(1)}>
+                ← Use a different email
+              </button>
+            </div>
           </form>
         )}
       </div>
-
-      <div className="glowBlob" style={{ top: "-20%", left: "-10%", background: "var(--accent)", opacity: 0.15 }} />
-      <div className="glowBlob" style={{ bottom: "-20%", right: "-10%", background: "var(--danger)", opacity: 0.1 }} />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getUserProfile } from "../../../../lib/api";
+import { getUserProfile, getUserAIFlags } from "../../../../lib/api";
 import {
   riskColor, riskClass, riskSeverityLabel,
   formatThreatType, formatChannelShort, formatStatus,
@@ -8,6 +8,8 @@ import {
 import { ContainmentPanel } from "./ContainmentPanel";
 import { DeviceLogsDrawer } from "./DeviceLogsDrawer";
 import { AuditRequestPanel } from "./AuditRequestPanel";
+import { RiskOverridePanel } from "./RiskOverridePanel";
+import { AssignTrainingPanel } from "./AssignTrainingPanel";
 function RiskGauge({ score }: { score: number }) {
   const r     = 54;
   const circ  = 2 * Math.PI * r;
@@ -37,8 +39,10 @@ function RiskGauge({ score }: { score: number }) {
 
 export default async function UserProfilePage({ params }: { params: { id: string } }) {
   let profile;
+  let aiFlags = [];
   try {
     profile = await getUserProfile(params.id);
+    aiFlags = await getUserAIFlags(params.id).catch(() => []);
   } catch {
     return (
       <div className="grid" style={{ gap: 20 }}>
@@ -193,17 +197,77 @@ export default async function UserProfilePage({ params }: { params: { id: string
         </div>
       </section>
 
+      {/* ── AI Flags ── */}
+      <section className="card fadeIn delay1">
+        <div className="sectionHeader" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+          <div>
+            <h3 style={{ marginBottom: 4 }}>AI Risk Flags</h3>
+            <p className="muted" style={{ fontSize: "0.84rem" }}>
+              Active behavioral anomalies detected by Qwen AI.
+            </p>
+          </div>
+          <span className="badge medium" style={{ background: aiFlags.length > 0 ? 'rgba(239,68,68,0.2)' : undefined, color: aiFlags.length > 0 ? '#f87171' : undefined }}>{aiFlags.length} flags</span>
+        </div>
+        
+        {aiFlags.length === 0 ? (
+          <div className="emptyState">
+            <div className="emptyStateIcon">✨</div>
+            <h4>No AI Flags</h4>
+            <p>Qwen AI has not detected any anomalous behavior for this user.</p>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+            {aiFlags.map(flag => (
+              <div key={flag.id} style={{ padding: 16, borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: 12, transition: 'all 0.3s ease' }} className="hover:border-white/20">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: '1.2rem' }}>{flag.source === 'usb' ? '🔌' : flag.source === 'network' ? '🌐' : '🛡️'}</span>
+                    <span style={{ fontWeight: 600, textTransform: 'capitalize', color: 'rgba(255,255,255,0.9)' }}>{flag.threat_category.replace(/_/g, ' ')}</span>
+                  </div>
+                  <div style={{ padding: '2px 8px', borderRadius: 4, background: 'rgba(239,68,68,0.2)', color: '#f87171', fontSize: '0.75rem', fontWeight: 700, border: '1px solid rgba(239,68,68,0.3)' }}>
+                    {flag.suspicion_score}% Risk
+                  </div>
+                </div>
+                <p className="muted" style={{ fontSize: '0.85rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                  {flag.qwen_reasoning || "No reasoning provided."}
+                </p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                  <span className="muted" style={{ fontSize: '0.75rem' }}>{new Date(flag.created_at).toLocaleString("en-IN")}</span>
+                  <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: 99, background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.8)' }}>{flag.status}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
       {/* ── Containment Actions & Live Telemetry ── */}
+      <RiskOverridePanel userId={user.id} currentScore={user.risk_score} />
       <ContainmentPanel userId={user.id} email={user.email} />
       
-      <div style={{ marginTop: 24 }}>
+      <div style={{ marginTop: 24, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
         <DeviceLogsDrawer email={user.email} />
+        <Link
+          href={`/analyst/stream?email=${encodeURIComponent(user.email)}`}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 8,
+            padding: "10px 18px", borderRadius: 10,
+            background: "rgba(141,208,194,0.08)", border: "1px solid rgba(141,208,194,0.2)",
+            color: "var(--accent-2)", fontSize: "0.85rem", fontWeight: 600,
+            textDecoration: "none", transition: "all 0.2s"
+          }}
+        >
+          <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "var(--success)", boxShadow: "0 0 6px var(--success)" }} />
+          View Live Stream →
+        </Link>
       </div>
 
       <AuditRequestPanel email={user.email} />
 
-      {/* ── Training plan ── */}
-      <section className="card fadeIn delay2">
+      {/* ── Training Assignment & Plan ── */}
+      <AssignTrainingPanel userId={user.id} />
+
+      <section className="card fadeIn delay2" style={{ marginTop: 20 }}>
         <div className="sectionHeader">
           <div>
             <p className="statLabel" style={{ marginBottom: 6 }}>Recommended Actions</p>

@@ -11,6 +11,7 @@ export default function LoginPage() {
   // Form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -211,9 +212,12 @@ export default function LoginPage() {
             </div>
             <div className="glassInputGroup">
               <label className="glassLabel">Password</label>
-              <input className="glassInput glassInput--analyst" type="password"
-                placeholder="••••••••" value={password}
-                onChange={(e) => setPassword(e.target.value)} required />
+              <div style={{ position: "relative" }}>
+                <input className="glassInput glassInput--analyst" type={showPassword ? "text" : "password"}
+                  placeholder="••••••••" value={password}
+                  onChange={(e) => setPassword(e.target.value)} required />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "rgba(255,255,255,0.5)", cursor: "pointer", padding: "4px" }} title={showPassword ? "Hide password" : "Show password"}>{showPassword ? "👁️‍🗨️" : "👁️"}</button>
+              </div>
             </div>
             <button type="submit" className="glassSubmitBtn glassSubmitBtn--analyst"
               disabled={isLoading}>
@@ -244,9 +248,12 @@ export default function LoginPage() {
             </div>
             <div className="glassInputGroup">
               <label className="glassLabel">Password</label>
-              <input className="glassInput glassInput--employee" type="password"
-                placeholder="••••••••" value={password}
-                onChange={(e) => setPassword(e.target.value)} required />
+              <div style={{ position: "relative" }}>
+                <input className="glassInput glassInput--employee" type={showPassword ? "text" : "password"}
+                  placeholder="••••••••" value={password}
+                  onChange={(e) => setPassword(e.target.value)} required />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "rgba(255,255,255,0.5)", cursor: "pointer", padding: "4px" }} title={showPassword ? "Hide password" : "Show password"}>{showPassword ? "👁️‍🗨️" : "👁️"}</button>
+              </div>
             </div>
             <button type="submit" className="glassSubmitBtn glassSubmitBtn--employee"
               disabled={isLoading}>

@@ -1,5 +1,84 @@
 import { NextResponse } from "next/server";
 import prisma from "../../../../lib/db";
+import { publishToStream, REDIS_STREAMS } from "../../../../lib/redis";
+import { randomUUID } from "crypto";
+
+/**
+ * Maps a telemetry category to the correct Redis stream name
+ * and builds the event payload matching the Pydantic contract
+ * that the hrip-triage service expects.
+ */
+function buildTriageEvent(
+  category: string,
+  eventData: any,
+  employeeEmail: string
+): { stream: string; payload: Record<string, unknown> } | null {
+  const now = new Date().toISOString();
+  const eventId = randomUUID();
+
+  switch (category) {
+    case "usb":
+      return {
+        stream: REDIS_STREAMS.USB,
+        payload: {
+          event_id: eventId,
+          username: employeeEmail,
+          device_name: eventData.device || "Unknown USB Device",
+          vid_pid: eventData.vid_pid || null,
+          action: eventData.event || "connected",
+          file_size_bytes: eventData.file_size_bytes || null,
+          timestamp: now,
+        },
+      };
+
+    case "network":
+      return {
+        stream: REDIS_STREAMS.NETWORK,
+        payload: {
+          event_id: eventId,
+          username: employeeEmail,
+          ip_address: eventData.ip || null,
+          status: eventData.isVpnSuspected ? "vpn_detected" : "normal",
+          reason: eventData.connectionType || null,
+          timestamp: now,
+        },
+      };
+
+    case "files":
+      // Build a file access event for each flagged file, or one summary event
+      return {
+        stream: REDIS_STREAMS.FILE_ACCESS,
+        payload: {
+          event_id: eventId,
+          username: employeeEmail,
+          file_path: eventData.scanPath || "~/Documents",
+          action:
+            eventData.flaggedNames?.length > 0
+              ? "mass_download"
+              : "read",
+          timestamp: now,
+        },
+      };
+
+    case "clipboard":
+      return {
+        stream: REDIS_STREAMS.CLIPBOARD,
+        payload: {
+          event_id: eventId,
+          username: employeeEmail,
+          content_type: eventData.patternMatched === "general" ? "text" : "credential_pattern",
+          size_bytes: eventData.preview?.length || 0,
+          patterns_detected: eventData.patternMatched !== "general" ? [eventData.patternMatched] : [],
+          source_app: null,
+          dest_app: null,
+          timestamp: now,
+        },
+      };
+
+    default:
+      return null;
+  }
+}
 
 export async function POST(req: Request) {
   try {
@@ -38,6 +117,7 @@ export async function POST(req: Request) {
     let riskScoreIncrease = 0;
     const dbEvents = [];
     const alertsToCreate = [];
+    let aiTriageCount = 0;
 
     for (const event of events) {
       const category = event.category;
@@ -47,7 +127,7 @@ export async function POST(req: Request) {
       let alertTitle = null;
       let alertDesc = null;
 
-      // Risk Engine
+      // ─── Existing hardcoded Risk Engine (kept for backward compat) ───
       if (category === "process") {
         if (event.data.isAfterHours && event.data.activeWindow?.toLowerCase().includes("game")) {
           flagged = true; riskLevel = "medium"; riskScoreIncrease += 3;
@@ -97,6 +177,13 @@ export async function POST(req: Request) {
           description: alertDesc
         });
       }
+
+      // ─── NEW: Publish to Redis Stream for AI Triage (Qwen) ───
+      const triageEvent = buildTriageEvent(category, event.data, employeeEmail);
+      if (triageEvent) {
+        const published = await publishToStream(triageEvent.stream, triageEvent.payload);
+        if (published) aiTriageCount++;
+      }
     }
 
     if (dbEvents.length > 0) {
@@ -114,7 +201,11 @@ export async function POST(req: Request) {
       });
     }
 
-    return NextResponse.json({ success: true, processed: events.length });
+    return NextResponse.json({
+      success: true,
+      processed: events.length,
+      ai_triage_queued: aiTriageCount,
+    });
   } catch (error) {
     console.error("Telemetry error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

@@ -99,13 +99,18 @@ export default function EmployeeDashboardPage() {
   }
 
   const emp = data.employee;
-  const unreadAlerts = alerts.filter(a => !a.isRead).length;
+  // ─── SAFETY: Clamp display score to 0-100 even if DB has corrupt value ───
+  const displayScore = Math.min(100, Math.max(0, Math.round(emp.riskScore ?? 0)));
+  const unreadAlerts = alerts.filter((a: any) => !a.isRead).length;
   const completedModules = training?.progress?.length || 0;
   const totalModules = training?.modules?.length || 0;
   const progressPct = totalModules ? Math.round((completedModules / totalModules) * 100) : 0;
-  const openIncidents = incidents.filter(i => (i.status || "open").toLowerCase() === "open").length;
-  const recentAlerts = alerts.filter(a => !a.isRead).slice(0, 3);
+  const openIncidents = incidents.filter((i: any) => (i.status || "open").toLowerCase() === "open").length;
+  const recentAlerts = alerts.filter((a: any) => !a.isRead).slice(0, 3);
   const nextModule = training?.modules?.find((m: any) => !training?.progress?.find((p: any) => p.moduleId === m.id));
+  // ─── Only count the 6 integrations shown in the Activity page ───
+  const COUNTED_INTEGRATIONS = ["email", "process", "usb", "network", "files", "clipboard"];
+  const activeIntegrationCount = COUNTED_INTEGRATIONS.filter(k => data?.session?.integrations?.[k]).length;
 
   return (
     <>
@@ -215,15 +220,15 @@ export default function EmployeeDashboardPage() {
             <svg viewBox="0 0 100 100">
               <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="10" />
               <circle cx="50" cy="50" r="42" fill="none"
-                stroke={riskColor(emp.riskScore)} strokeWidth="10" strokeLinecap="round"
+                stroke={riskColor(displayScore)} strokeWidth="10" strokeLinecap="round"
                 strokeDasharray="263.9"
-                strokeDashoffset={263.9 - (263.9 * emp.riskScore) / 100}
+                strokeDashoffset={263.9 - (263.9 * displayScore) / 100}
                 style={{ transition: "stroke-dashoffset 1.2s ease" }}
               />
             </svg>
             <div className="center">
-              <span style={{ fontSize: "1.6rem", fontWeight: 700, color: riskColor(emp.riskScore), fontFamily: "var(--font-serif), serif" }}>
-                {Math.round(emp.riskScore)}
+              <span style={{ fontSize: "1.6rem", fontWeight: 700, color: riskColor(displayScore), fontFamily: "var(--font-serif), serif" }}>
+                {displayScore}
               </span>
               <span style={{ fontSize: "0.62rem", color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>risk</span>
             </div>
@@ -277,7 +282,7 @@ export default function EmployeeDashboardPage() {
           <div className="ov-icon-wrap" style={{ background: "rgba(141,208,194,0.1)" }}>◉</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 700, fontSize: "1.1rem" }}>
-              {data?.session ? Object.values(data.session.integrations || {}).filter(Boolean).length : 0}/6
+              {activeIntegrationCount}/6
             </div>
             <div style={{ fontSize: "0.88rem", fontWeight: 600, marginBottom: 2 }}>Integrations Active</div>
             <div className="muted" style={{ fontSize: "0.76rem" }}>Live telemetry monitoring</div>

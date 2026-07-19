@@ -30,10 +30,13 @@ export default async function UsersPage() {
     );
   }
 
-  const critical = users.filter((u) => u.riskScore >= 85);
-  const high     = users.filter((u) => u.riskScore >= 65 && u.riskScore < 85);
-  const medium   = users.filter((u) => u.riskScore >= 40 && u.riskScore < 65);
-  const low      = users.filter((u) => u.riskScore < 40);
+  // ─── SAFETY: Clamp all scores to 0-100 for display ───
+  const usersDisplay = users.map(u => ({ ...u, riskScore: Math.min(100, Math.max(0, u.riskScore)) }));
+
+  const critical = usersDisplay.filter((u) => u.riskScore >= 85);
+  const high     = usersDisplay.filter((u) => u.riskScore >= 65 && u.riskScore < 85);
+  const medium   = usersDisplay.filter((u) => u.riskScore >= 40 && u.riskScore < 65);
+  const low      = usersDisplay.filter((u) => u.riskScore < 40);
 
   return (
     <div className="grid" style={{ gap: 20 }}>
@@ -72,7 +75,7 @@ export default async function UsersPage() {
         <div className="queueSummary" style={{ marginTop: 16 }}>
           <div className="queueSummaryCard">
             <span className="muted">Total employees</span>
-            <strong>{users.length}</strong>
+            <strong>{usersDisplay.length}</strong>
           </div>
           <div className="queueSummaryCard">
             <span className="muted">Critical risk</span>
@@ -111,7 +114,7 @@ export default async function UsersPage() {
           </p>
           <div className="stackList">
             {[...critical, ...high].map((user, index) => (
-              <Link key={user.id} href={`/users/${user.id}`} className="listRow">
+              <Link key={user.id} href={`/analyst/users/${user.id}`} className="listRow">
                 <div className="listRank">{index + 1}</div>
                 <div className="listBody">
                   <div className="listTitle">{user.name}</div>
@@ -147,7 +150,7 @@ export default async function UsersPage() {
           </div>
         </div>
 
-        {users.length === 0 ? (
+        {usersDisplay.length === 0 ? (
           <div className="emptyState">
             <div className="emptyStateIcon">👥</div>
             <h4>No employees yet</h4>
@@ -158,11 +161,11 @@ export default async function UsersPage() {
           </div>
         ) : (
           <div className="stackList">
-            {users.map((user, index) => {
+            {usersDisplay.map((user, index) => {
               const color = riskColor(user.riskScore);
               const pct   = user.riskScore;
               return (
-                <Link key={user.id} href={`/users/${user.id}`} className="listRow">
+                <Link key={user.id} href={`/analyst/users/${user.id}`} className="listRow">
                   <div className="listRank" style={{ fontSize: "0.78rem" }}>{index + 1}</div>
                   <div className="listBody">
                     <div className="listTitle">{user.name}</div>

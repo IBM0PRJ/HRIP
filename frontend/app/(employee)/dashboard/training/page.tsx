@@ -251,7 +251,9 @@ export default function TrainingPage() {
   const totalModules = training?.modules?.length || 0;
   const progressPct = totalModules ? Math.round((completedModules / totalModules) * 100) : 0;
 
-  const riskScore = empData?.employee?.riskScore || 50;
+  // ─── SAFETY: Clamp display score to 0-100 ───
+  const riskScore = Math.min(100, Math.max(0, Math.round(empData?.employee?.riskScore ?? 50)));
+
   const recommendedModules = training?.modules?.filter((m: any) => {
     const done = training?.progress?.find((p: any) => p.moduleId === m.id);
     return !done;

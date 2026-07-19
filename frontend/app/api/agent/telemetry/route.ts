@@ -169,13 +169,30 @@ export async function POST(req: Request) {
       });
 
       if (alertTitle) {
-        alertsToCreate.push({
-          employeeId: employee.id,
-          type: category === "usb" ? "usb_alert" : category === "files" || category === "clipboard" ? "data_exfil" : "suspicious_login",
-          severity: riskLevel,
-          title: alertTitle,
-          description: alertDesc
+        // ─── Deduplication: skip if identical unread alert exists within last 60 minutes ───
+        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+        const alertType = category === "usb" ? "usb_alert" : category === "files" || category === "clipboard" ? "data_exfil" : "suspicious_login";
+        const existingAlert = await prisma.employeeAlert.findFirst({
+          where: {
+            employeeId: employee.id,
+            type: alertType,
+            title: alertTitle,
+            isRead: false,
+            createdAt: { gte: oneHourAgo }
+          }
         });
+        if (!existingAlert) {
+          alertsToCreate.push({
+            employeeId: employee.id,
+            type: alertType,
+            severity: riskLevel,
+            title: alertTitle,
+            description: alertDesc
+          });
+        } else {
+          // Don't add to risk score if alert was deduplicated
+          riskScoreIncrease = Math.max(0, riskScoreIncrease - (riskLevel === "critical" ? 12 : riskLevel === "high" ? (category === "process" ? 15 : 10) : riskLevel === "medium" ? (category === "usb" ? 5 : 8) : 3));
+        }
       }
 
       // ─── NEW: Publish to Redis Stream for AI Triage (Qwen) ───
@@ -195,9 +212,11 @@ export async function POST(req: Request) {
     }
 
     if (riskScoreIncrease > 0) {
+      // ─── CRITICAL FIX: Cap risk score at 100, never use raw increment ───
+      const newScore = Math.min(100, Math.max(0, employee.riskScore + riskScoreIncrease));
       await prisma.employee.update({
         where: { id: employee.id },
-        data: { riskScore: { increment: riskScoreIncrease } }
+        data: { riskScore: newScore }
       });
     }
 

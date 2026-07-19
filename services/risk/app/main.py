@@ -9,11 +9,11 @@ import logging
 
 from hrip_shared.auth.passwords import hash_password
 from hrip_shared.broker import RedisStreamBroker
-from hrip_shared.contracts.events import DetectionEvent, RiskEvent as RiskEventContract, USBEvent, LoginEvent, FileAccessEvent
+from hrip_shared.contracts.events import DetectionEvent, RiskEvent as RiskEventContract, USBEvent, LoginEvent, FileAccessEvent, AIFlagEvent
 from hrip_shared.db import Alert, Message, User, RiskEvent, session_factory, wait_for_db
 from hrip_shared.services.idempotency import already_processed, mark_processed
 from hrip_shared.utils.streams import (
-    DETECTION_STREAM, RISK_STREAM, USB_EVENT_STREAM, LOGIN_EVENT_STREAM, FILE_ACCESS_STREAM
+    DETECTION_STREAM, RISK_STREAM, USB_EVENT_STREAM, LOGIN_EVENT_STREAM, FILE_ACCESS_STREAM, AI_FLAG_STREAM
 )
 
 from .engine.calculator import SEVERITY_DELTAS, apply_time_decay, calculate_new_score, score_to_severity, score_to_access_level
@@ -201,7 +201,41 @@ async def process_file_access(entry_id: str, payload: dict) -> None:
         await mark_processed(session, "risk_file", entry_id)
 
 
-_bg_tasks = set()
+async def process_ai_flag(entry_id: str, payload: dict) -> None:
+    """Consume AIFlagEvent from Triage and update the employee's risk score."""
+    event = AIFlagEvent.model_validate(payload)
+    async with session_factory() as session:
+        if await already_processed(session, "risk_ai_flag", entry_id):
+            return
+        user = await session.get(User, str(event.user_id))
+        if user is None:
+            logger.warning(f"AI flag references unknown user_id={event.user_id}, skipping.")
+            await mark_processed(session, "risk_ai_flag", entry_id)
+            return
+
+        # Skip if score was manually overridden by an analyst
+        if user.score_manually_set:
+            logger.info(f"Skipping AI flag score update for {user.email} — score is manually set.")
+            await mark_processed(session, "risk_ai_flag", entry_id)
+            return
+
+        # Scale AI suspicion score (0.0-1.0) to a risk delta (0-25 points)
+        delta = round(event.suspicion_score * 25.0, 2)
+        if delta > 0:
+            await update_user_score(
+                session, user, delta,
+                "ai_flag",
+                f"AI Triage [{event.source}] — {event.threat_category} (score={event.suspicion_score:.2f})"
+            )
+            await session.commit()
+            logger.info(f"Applied AI flag delta +{delta} to {user.email} (new score={user.risk_score:.1f})")
+
+        await mark_processed(session, "risk_ai_flag", entry_id)
+
+
+
+
+_bg_tasks: set = set()
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
@@ -210,12 +244,14 @@ async def lifespan(_: FastAPI):
     task2 = asyncio.create_task(broker.consume_forever(USB_EVENT_STREAM, "risk_usb", "risk-usb-1", process_usb))
     task3 = asyncio.create_task(broker.consume_forever(LOGIN_EVENT_STREAM, "risk_login", "risk-login-1", process_login))
     task4 = asyncio.create_task(broker.consume_forever(FILE_ACCESS_STREAM, "risk_file", "risk-file-1", process_file_access))
-    _bg_tasks.update([task1, task2, task3, task4])
+    task5 = asyncio.create_task(broker.consume_forever(AI_FLAG_STREAM, "risk_ai_flag", "risk-ai-flag-1", process_ai_flag))
+    _bg_tasks.update([task1, task2, task3, task4, task5])
     yield
     task1.cancel()
     task2.cancel()
     task3.cancel()
     task4.cancel()
+    task5.cancel()
 
 
 app = FastAPI(title="hrip-risk", lifespan=lifespan)

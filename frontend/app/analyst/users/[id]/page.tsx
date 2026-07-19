@@ -51,7 +51,7 @@ export default async function UserProfilePage({ params }: { params: { id: string
           <h2>Employee not found</h2>
           <p className="muted" style={{ marginTop: 8 }}>
             This employee may not exist or the ID is incorrect.{" "}
-            <Link className="tableLink" href="/users">← Back to employee list</Link>
+            <Link className="tableLink" href="/analyst/users">← Back to employee list</Link>
           </p>
         </section>
       </div>
@@ -177,7 +177,7 @@ export default async function UserProfilePage({ params }: { params: { id: string
           ) : (
             <div className="stackList">
               {alerts.map((alert) => (
-                <Link className="listRow" href={`/alerts/${alert.id}`} key={alert.id}>
+                <Link className="listRow" href={`/analyst/alerts/${alert.id}`} key={alert.id}>
                   <div className="listBody">
                     <div className="listTitle">
                       {formatThreatType(alert.threat_type)} via {formatChannelShort(alert.channel)}

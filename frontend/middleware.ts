@@ -29,11 +29,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Analyst routes
-  const analystRoutes = ['/analyst', '/analyst/alerts', '/analyst/users', '/analyst/access-requests', '/analyst/incidents', '/analyst/pending-signups'];
-  const isAnalystRoute = analystRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`));
+  // Analyst routes — protect all /analyst/* pages and /api/analyst/* endpoints
+  const isAnalystRoute = pathname.startsWith('/analyst');
   const isAnalystApi = pathname.startsWith('/api/analyst');
   
+
   if (isAnalystRoute || isAnalystApi) {
     const hasAnalystSession = request.cookies.has('analyst_session');
     if (!hasAnalystSession) {

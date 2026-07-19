@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { WorkflowGuide } from "../../components/WorkflowGuide";
+import { SanitizeScoresButton } from "../../components/SanitizeScoresButton";
 import prisma from "../../lib/db";
 import { riskSeverityLabel, formatRelativeTime } from "../../lib/formatters";
 
@@ -18,13 +19,16 @@ export default async function HomePage() {
     const openAlerts = alerts.filter(a => !a.isRead);
     const criticalAlerts = alerts.filter(a => (a.severity === "critical" || a.severity === "high") && !a.isRead);
     const highRiskUsers = employees.filter(e => e.riskScore > 60).slice(0, 6);
+    const hasCorruptedScores = employees.some(e => e.riskScore > 100);
     
+    // Clamp average to 0-100 range for display
     const avgRisk = employees.length > 0 
-      ? employees.reduce((sum, e) => sum + e.riskScore, 0) / employees.length 
+      ? Math.min(100, employees.reduce((sum, e) => sum + Math.min(100, e.riskScore), 0) / employees.length) 
       : 0;
 
     return (
       <div className="grid" style={{ gap: 24 }}>
+        {hasCorruptedScores && <SanitizeScoresButton />}
         <WorkflowGuide />
 
         {criticalAlerts.length > 0 && (
@@ -40,7 +44,7 @@ export default async function HomePage() {
                 </div>
               </div>
             </div>
-            <Link className="buttonPrimary" href="/alerts?status=open">
+            <Link className="buttonPrimary" href="/analyst/alerts">
               Triage now →
             </Link>
           </section>
@@ -77,7 +81,7 @@ export default async function HomePage() {
               </h3>
               <p className="heroStatCopy">Critical and high-severity alerts still open.</p>
               {criticalAlerts.length > 0 && (
-                <Link className="statAction" href="/alerts?severity=critical">
+                <Link className="statAction" href="/analyst/alerts">
                   Start triaging →
                 </Link>
               )}
@@ -115,7 +119,7 @@ export default async function HomePage() {
               <span className="muted" style={{ fontSize: "0.78rem" }}>
                 {incidents.filter(i => i.status === 'pending_review').length} pending review
               </span>
-              <Link className="tableLink" href="/incidents" style={{ fontSize: "0.8rem" }}>View reports →</Link>
+              <Link className="tableLink" href="/analyst/incidents" style={{ fontSize: "0.8rem" }}>View reports →</Link>
             </div>
           </div>
         </section>
